@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 27 13:00:58 2018
+Created on Thu June 27 13:00:58 2018
 
 @author: William J. Trenberth
 """
@@ -8,34 +8,33 @@ Created on Thu Jun 27 13:00:58 2018
 import numpy as np
 from matplotlib import animation
 import matplotlib.pyplot as plt
+import scipy.fftpack as fft
 
 def main():
     #The main parameters
-    N = 2**7
-    dt = 0.0001
+    N = 2**8
+    dt = 0.001
     eps = 0.0001
     Nt = int(10*dt*eps*N**4)
-
+    
+    #discretising the unit interval.
     x = np.linspace(0,1,N)
     x = np.delete(x,-1)
     
-    #The inital condition
-    alpha1 = 0.9
-    alpha2 = 0.5
-    u0 = alpha1 /np.cosh(np.sqrt(alpha1/(12*eps))*(x - 0.7))**2 
-    + alpha2/np.cosh(np.sqrt(alpha2/(12*eps))*(x - 0.3))**2
+    #The inital condition.
+    #u0 = random_initial_data(N,3.5)
+    u0 = 1/np.cosh(np.sqrt(1/(12*eps))*(x - 0.8))**2
 
     #Animating the solution. See the Animate class below.    
     fig = plt.figure()
-    ax = plt.axes(xlim=(0, 1), ylim=(-0.5, 1.5))
+    ax = plt.axes(xlim=(0, 1), ylim=(-3,3))
     line, = ax.plot([], [], lw=2)
     animate = Animate(line,dt,Nt,u0,eps)  
     anim = animation.FuncAnimation(fig, animate, frames=8000, interval=20)
     
     #Saving the animation
-    #anim.save("KdV.mp4")
+    anim.save("KdV6.mp4")
     
-
 def KdV_solver(t, Nt, u0, eps):
     '''A function to calculate, using an explicit, three point finite difference 
     method,  the solution to the KdV equation
@@ -102,6 +101,19 @@ class Animate():
         self.u = KdV_solver(self.dt, self.Nt, self.u, self.eps)
         self.line.set_data(self.x, self.u)
         return self.line
+    
+def random_initial_data(N,s):
+    '''Using the DFT,  randomly generates a funcion of the form 
+    $\sum\limits_{k=-N/2-1}^{N/2} \frac{g_k}{\langle k\rangle^s}e^{k\pi x}$
+    where $g_k$ is a sequence of independent identically distributed 
+    random variables and $\overline{g_k} = g_{-k} $.
+    '''
+    k = np.arange(1,N +1)
+    Ff = np.random.randn(N)/((k**2 + 1)**(s/2))
+    f = fft.irfft(Ff)
+    f = 1000*np.delete(f,-1)
+    
+    return f
 
 if __name__ == "__main__": main()
     
